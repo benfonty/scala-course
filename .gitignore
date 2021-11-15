@@ -1,2 +1,36 @@
-*.class
+# Gradle
+
+# Eclipse
+.metadata
+.checkstyle
+.classpath
+.pmd
+.project
+.ruleset
+.settings
+bin
 *.log
+*.log.[0-9]*
+
+# IntelliJ IDEA
+*.i??
+.idea
+!*.ico
+**/out
+**/classes
+**/target
+**/sbt-1.0
+**/sbt.json
+
+# Vi
+*.swp
+
+
+#TSBI
+buildSrc/
+logs/
+
+**/api-generated/
+
+# build
+version.txt
