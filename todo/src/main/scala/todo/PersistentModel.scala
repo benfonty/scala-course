@@ -1,11 +1,12 @@
 package todo
 
 import cats.implicits.*
-import java.nio.file.{Path, Paths, Files}
+
+import java.nio.file.{Files, Path, Paths}
 import java.nio.charset.StandardCharsets
-import io.circe.{Decoder, Encoder}
-import io.circe.parser.*
+import io.circe.{Decoder, Encoder, jawn}
 import io.circe.syntax.*
+
 import scala.collection.mutable
 import todo.data.*
 
@@ -57,7 +58,7 @@ object PersistentModel extends Model:
 
     // In a production system we would want to pay more attention to error
     // handling than we do here, but this is sufficient for the case study.
-    decode[A](str) match {
+    jawn.decode[A](str) match {
       case Right(result) => result
       case Left(error) => throw error
     }
@@ -96,28 +97,42 @@ object PersistentModel extends Model:
    */
 
   def create(task: Task): Id =
-    ???
+    val newId = loadId().next
+    saveId(newId)
+    saveTasks(Tasks((newId, task) :: loadTasks().toList))
+    newId
+
 
   def read(id: Id): Option[Task] =
-    ???
+    loadTasks().toList.find(x => {x._1 == id} ).map(x => x._2)
+
 
   def update(id: Id)(f: Task => Task): Option[Task] =
-    ???
+    val tasks = loadTasks()
+    val updatedTasks = Tasks(tasks.tasks.map(t => if t._1 == id then (t._1, f(t._2)) else (t._1, t._2)))
+    saveTasks(updatedTasks)
+    updatedTasks.tasks.find(x => {x._1 == id} ).map(x => x._2)
 
   def delete(id: Id): Boolean =
-    ???
+    val result = read(id)
+    saveTasks(Tasks(loadTasks().toList.filter(x => x._1 != id)))
+    result.isDefined
 
   def tasks: Tasks =
-    ???
+    Tasks(loadTasks().toList.sortWith((x, y) => x._1.toInt <   y._1.toInt))
 
   def tasks(tag: Tag): Tasks =
-    ???
+    Tasks(tasks.toList.filter(x => x._2.tags.contains(tag)))
 
   def complete(id: Id): Option[Task] =
-    ???
+    update(id)(_.complete)
 
   def tags: Tags =
-    ???
+    val l = for
+      task <- tasks.toList.map(x => x._2)
+      tag <- task.tags
+    yield tag
+    Tags(l.toList.distinct)
 
   def clear(): Unit =
-    ???
+    saveTasks(Tasks.empty)
